@@ -1,75 +1,107 @@
-import PIL
-import numpy
+#!/usr/bin/python
 
+from __future__ import print_function
+
+import numpy
 from skimage.feature import hog
-from skimage import data, exposure
 
 import glob
 import json
 import sys
 import cv2
+import os
 
 
-if len(sys.argv) < 2:
-    print('Pass a folder containing \'Folio Leaf Dataset\'')
+def make_all_leafs_paths(folder):
+    leafs_dir = '{}/Folio Leaf Dataset/Folio/*/*.jpg'.format(folder)
+    leafs_paths = glob.glob(leafs_dir)
 
-folder = sys.argv[1]
-ftype = 'numpy'
+    leafs_dir = '{}/Folio Leaf Dataset/Folio/*/*.JPG'.format(folder)
+    leafs_paths += glob.glob(leafs_dir)
 
-leafs_dir = '{}/Folio Leaf Dataset/Folio/*/*.jpg'.format(folder)
-leafs_paths = glob.glob(leafs_dir)
+    '''make sure labels will match features'''
+    leafs_paths.sort()
 
-leafs_dir = '{}/Folio Leaf Dataset/Folio/*/*.JPG'.format(folder)
-leafs_paths += glob.glob(leafs_dir)
+    return leafs_paths
 
-leafs_paths.sort()
 
-images_num = len(numpy.asarray(leafs_paths))
-last_folder = ''
+def create_features_and_labels(leafs_paths):
+    j = -1
+    last_folder = ''
 
-label_map = {}
-j = -1
+    label_map = {}
+    feature_list = []
+    label_list = []
 
-feature_list = []
-label_list = []
+    images_num = len(numpy.asarray(leafs_paths))
+    for i, lp in enumerate(leafs_paths):
 
-for i, lp in enumerate(leafs_paths):
-    print("{0} out of {1}".format(i, images_num))
+        '''print logs in one line'''
+        print('\r', end='')
+        print('{0} out of {1}'.format(i, images_num), end='')
+        sys.stdout.flush()
 
-    curr_folder = lp.split('/')[-2]
+        curr_folder = lp.split('/')[-2]
 
-    if curr_folder != last_folder:
-        j += 1
-        label_map[curr_folder] = j
+        if curr_folder != last_folder:
+            j += 1
 
-    image = cv2.imread(lp)
-    image = cv2.resize(image, (64, 128))
+            '''map a labels to leaf species'''
+            label_map[curr_folder] = j
 
-    fd = hog(
-        image,
-        block_norm='L2-Hys'
-    )
+        image = cv2.imread(lp)
 
-    feature_list.append(fd)
-    label_list.append(j)
+        '''resize image to 64x128 pixels'''
+        image = cv2.resize(image, (64, 128))
 
-    last_folder = curr_folder
+        '''extract HOG features vector'''
+        fd = hog(
+            image,
+            block_norm='L2-Hys'
+        )
 
-feature_list = numpy.asarray(feature_list)
-label_list = numpy.asarray(label_list)
+        feature_list.append(fd)
+        label_list.append(j)
 
-with open("label_map.json", "w") as f:
-    json.dump(label_map, f)
+        last_folder = curr_folder
 
-if ftype == 'numpy':
-    feature_fn = "data/labels.npy"
-    numpy.save(feature_fn, label_list)
+    print('')
 
-    label_fn = "data/features.npy"
-    numpy.save(label_fn, feature_list)
+    '''convert lists to numpy arrays'''
+    feature_list = numpy.asarray(feature_list)
+    label_list = numpy.asarray(label_list)
 
-elif ftype == 'pandas':
-    output_fn = "data/leafs.csv"
-    numpy.savetxt(output_fn, feature_list, '%10.10f', delimiter=',')
+    save_data(feature_list, label_list, label_map)
 
-print("Data saved to folder 'data' as {}".format(ftype))
+
+def save_data(feature_list, label_list, label_map):
+    with open('label_map.json', 'w') as f:
+        json.dump(label_map, f)
+
+    if not os.path.isdir('data'):
+        if os.path.exists('data'):
+            print('Error. File named \'data\' exists.')
+            sys.exit(1)
+        os.mkdir('data', 0o600)
+
+    label_filename = 'data/labels.npy'
+    numpy.save(label_filename, label_list)
+
+    feature_filename = 'data/features.npy'
+    numpy.save(feature_filename, feature_list)
+
+    print('Data saved to {0} and {1}'.format(feature_filename, label_filename))
+
+
+def main():
+    if len(sys.argv) < 2:
+        print('Pass a folder containing \'Folio Leaf Dataset\'')
+
+    folder = sys.argv[1]
+
+    leafs_paths = make_all_leafs_paths(folder)
+    create_features_and_labels(leafs_paths)
+
+
+if __name__ == '__main__':
+    main()
