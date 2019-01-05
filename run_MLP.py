@@ -22,7 +22,7 @@ if __name__ == '__main__':
     features = np.load('data/features.npy')
     labels = np.load('data/labels.npy')
 
-    '''each sample have to have label'''
+    '''each sample must have a label'''
     if len(features) != len(labels):
         raise Exception('Error. Features and labels have different lengths!')
 
@@ -45,23 +45,25 @@ if __name__ == '__main__':
     test_features = features[val_offset:]
 
     classes = 32
+    feature_len = len(features[0])
 
     '''create neural network with 4 layers'''
     model = tf.keras.models.Sequential()
 
-    input_layer = tf.keras.layers.Dense(
-        100,
-        input_shape=(6804,),
+    nodes1 = 128
+    hidden_layer1 = tf.keras.layers.Dense(
+        nodes1,
+        input_shape=(feature_len,),
         activation=tf.nn.relu
     )
-    model.add(input_layer)
+    model.add(hidden_layer1)
 
-    hidden_layers = [100, 100]
-    for hidden_layer in hidden_layers:
-        model.add(tf.keras.layers.Dense(
-            hidden_layer,
-            activation=tf.nn.relu
-        ))
+    nodes2 = 128
+    hidden_layer2 = tf.keras.layers.Dense(
+        nodes2,
+        activation=tf.nn.relu
+    )
+    model.add(hidden_layer2)
 
     output_layer = tf.keras.layers.Dense(
         classes,
@@ -75,15 +77,13 @@ if __name__ == '__main__':
         metrics=['accuracy']
     )
 
-    '''train neural network for 40 epochs'''
+    '''train neural network for 10 epochs'''
     model.fit(
         train_features,
         train_labels,
-        epochs=20,
+        epochs=10,
         validation_data=(val_features, val_labels)
     )
 
-    print('')
-    print('Final loss: {0}, Final accuracy {1}'.format(
-        *model.evaluate(test_features, test_labels)
-    ))
+    loss, accuracy = model.evaluate(test_features, test_labels)
+    print('Final accuracy: {}'.format(accuracy))

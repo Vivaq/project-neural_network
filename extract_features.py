@@ -82,7 +82,7 @@ def save_data(feature_list, label_list, label_map):
         if os.path.exists('data'):
             print('Error. File named \'data\' exists.')
             sys.exit(1)
-        os.mkdir('data', 0o600)
+        os.mkdir('data', 0o755)
 
     label_filename = 'data/labels.npy'
     numpy.save(label_filename, label_list)
