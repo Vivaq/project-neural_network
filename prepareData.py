@@ -14,6 +14,7 @@ rootPathsToCreate = []
 
 rootPathsToCreate.append('FolioLeafDataset/Folio/train')
 rootPathsToCreate.append('FolioLeafDataset/Folio/test')
+rootPathsToCreate.append('FolioLeafDataset/Folio/validation')
 
 subPathsToCreate = []
 
@@ -31,12 +32,16 @@ for path in listOfDirectiories:
 
 testFilesPaths = []
 trainFilesPaths = []
+validationFilesPaths = []
 
 for key, value in filesDictionary.items():
-    trainData = random.sample(value, 15)
-    testData = set(value) - set(trainData)
+    trainData = random.sample(value, 10)
+    restOfData = set(value) - set(trainData)
+    testData = random.sample(restOfData, 5)
+    validationData = set(restOfData) - set(testData)
     testFilesPaths.append(testData)
-    trainFilesPaths.append(value)
+    trainFilesPaths.append(trainData)
+    validationFilesPaths.append(validationData)
 
 for path in rootPathsToCreate:
     os.makedirs(path)
@@ -47,6 +52,10 @@ for path in subPathsToCreate:
 for value in testFilesPaths:
     for item in value:
        shutil.move(item, 'FolioLeafDataset/Folio/test/' + item.rsplit('/')[2])
+
+for value in validationFilesPaths:
+    for item in value:
+       shutil.move(item, 'FolioLeafDataset/Folio/validation/' + item.rsplit('/')[2])
 
 for dir in listOfDirectiories:
     for item in (fnmatch.filter(os.listdir(dir), '*.jpg')):

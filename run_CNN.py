@@ -12,7 +12,7 @@ def runCNN():
     trainData = 'FolioLeafDataset/Folio/train'
     testData = 'FolioLeafDataset/Folio/test'
 
-    trainGenerator = keras.preprocessing.image.ImageDataGenerator().flow_from_directory(trainData, target_size=(224,224), classes=classes, batch_size=5)
+    trainGenerator = keras.preprocessing.image.ImageDataGenerator().flow_from_directory(trainData, target_size=(224,224), classes=classes, batch_size=15)
 
     testGenerator = keras.preprocessing.image.ImageDataGenerator().flow_from_directory(testData, target_size=(224, 224), classes=classes, batch_size=15)
 
@@ -39,20 +39,22 @@ def runCNN():
         metrics=['accuracy']
     )
 
+    model.summary()
+
     predictedValues = []
     trueValues = []
     testLabels = []
 
     batch_index = 0
 
-    while batch_index <= 6:
+    while batch_index <= 10:
         testImgs, labels = next(testGenerator)
         for value in labels:
             testLabels.append(value)
         batch_index += 1
 
     model.fit_generator(trainGenerator, steps_per_epoch=4, epochs=10, verbose=2)
-    predictions = model.predict_generator(testGenerator, verbose=2, steps=7)
+    predictions = model.predict_generator(testGenerator, verbose=2, steps=11)
 
 
     print(testLabels)
