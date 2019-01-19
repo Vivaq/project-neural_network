@@ -15,9 +15,11 @@ def getImagePaths():
 
 def getFilesPaths():
     for dir in directories:
-        for item in (fnmatch.filter(os.listdir(dir), '*.jpg')):
+        for iterator, item in enumerate((fnmatch.filter(os.listdir(dir), '*.jpg'))):
             path = dir + '/' + item
             filesPaths.append(path)
+            if iterator >= 4:
+                break
 
 def performAugumentation():
     gen = keras.preprocessing.image.ImageDataGenerator(rotation_range=10, width_shift_range=0.1, height_shift_range=0.1,
@@ -36,4 +38,5 @@ def performAugumentation():
 
 getImagePaths()
 getFilesPaths()
+print (filesPaths)
 performAugumentation()
